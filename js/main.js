@@ -86,44 +86,15 @@
     video.muted = true; video.defaultMuted = true; video.playsInline = true;
     video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
     video.src = portrait ? video.getAttribute('data-src-sm') : video.getAttribute('data-src-lg');
-    var fellBack = false;
-    var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    // o iPhone (economia de energia ou "reprodução automática" desligada) recusa o play: o Safari ainda anima
-    // um MP4 dentro de <img>, como um GIF, sem depender do autoplay. Se a <img> não carregar, fica o poster.
-    var useImg = function () {
-      if (fellBack || !isIOS) return;
-      fellBack = true;
-      var img = new Image();
-      img.className = 'hero__video'; img.alt = ''; img.setAttribute('aria-hidden', 'true');
-      img.onload = function () {
-        if (!img.naturalWidth) { fellBack = false; return; }
-        video.pause(); video.style.display = 'none';
-        video.parentNode.insertBefore(img, video);
-        vToggle.hidden = true;
-      };
-      img.onerror = function () { fellBack = false; };
-      img.src = video.getAttribute('src');
-    };
-    var blocked = function () { setVideoBtn(false); if (!userPaused) useImg(); };
     var tryPlay = function () {
-      if (userPaused || fellBack || !video.paused) return;
-      var p = video.play(); if (p && p.catch) p.catch(function (e) { if (e && e.name === 'NotAllowedError') blocked(); else setVideoBtn(false); });
+      if (userPaused || !video.paused) return;
+      var p = video.play(); if (p && p.catch) p.catch(function () { setVideoBtn(false); });
     };
     tryPlay();
-    video.addEventListener('loadeddata', function () {
-      tryPlay();
-      // alguns navegadores não rejeitam o play, só não tocam: confere depois de um instante
-      setTimeout(function () { if (video.paused && !userPaused && !document.hidden) blocked(); }, 1500);
-    });
-    // fora do iPhone: o primeiro toque, clique ou tecla libera o play (touchstart e rolagem não contam como gesto)
-    var kick = function (e) {
-      if (e.target && e.target.closest && e.target.closest('[data-video-toggle]')) return;
-      tryPlay();
-    };
-    ['touchend', 'click', 'keydown'].forEach(function (ev) { document.addEventListener(ev, kick, { passive: true, capture: true }); });
-    video.addEventListener('playing', function () {
-      ['touchend', 'click', 'keydown'].forEach(function (ev) { document.removeEventListener(ev, kick, { capture: true }); });
-    });
+    video.addEventListener('loadeddata', tryPlay);
+    // modo de economia de energia do iPhone e economia de dados bloqueiam o autoplay: tenta de novo no primeiro toque ou rolagem
+    var kick = function () { tryPlay(); };
+    ['touchstart', 'pointerdown', 'scroll', 'keydown'].forEach(function (ev) { window.addEventListener(ev, kick, { passive: true, once: true }); });
     document.addEventListener('visibilitychange', function () { if (!document.hidden) tryPlay(); });
     video.addEventListener('play', function () { setVideoBtn(true); });
     video.addEventListener('pause', function () { setVideoBtn(false); });
