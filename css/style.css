@@ -539,3 +539,8 @@ em { font-style: normal; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
 }
+
+/* celular e tablet em pé: poster vertical do vídeo */
+@media (max-width: 900px) and (orientation: portrait) {
+  .hero__media { background-image: url("../img/video/hero-poster-mobile.webp?v=1"); }
+}

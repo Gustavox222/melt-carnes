@@ -73,20 +73,29 @@
   /* ------------------------------------------------------------ vídeo do hero */
   var video = $('[data-hero-video]');
   var vToggle = $('[data-video-toggle]');
-  var userPaused = reduce;
+  var userPaused = false;
   function setVideoBtn(playing) {
     vToggle.setAttribute('aria-pressed', String(!playing));
     vToggle.querySelector('use').setAttribute('href', playing ? '#i-pause' : '#i-play');
     vToggle.querySelector('.sr').textContent = playing ? 'Pausar o vídeo' : 'Reproduzir o vídeo';
   }
   if (video) {
-    var small = window.matchMedia('(max-width: 700px)').matches || (navigator.connection && navigator.connection.saveData);
-    video.src = small ? video.getAttribute('data-src-sm') : video.getAttribute('data-src-lg');
-    video.muted = true;
-    if (reduce) { video.removeAttribute('autoplay'); video.pause(); setVideoBtn(false); }
-    else {
+    // tela em pé (celular e tablet na vertical): versão vertical recortada, nítida e leve
+    var portrait = window.matchMedia('(max-width: 900px) and (orientation: portrait)').matches;
+    if (portrait) video.setAttribute('poster', video.getAttribute('data-poster-sm'));
+    video.muted = true; video.defaultMuted = true; video.playsInline = true;
+    video.setAttribute('muted', ''); video.setAttribute('playsinline', ''); video.setAttribute('webkit-playsinline', '');
+    video.src = portrait ? video.getAttribute('data-src-sm') : video.getAttribute('data-src-lg');
+    var tryPlay = function () {
+      if (userPaused || !video.paused) return;
       var p = video.play(); if (p && p.catch) p.catch(function () { setVideoBtn(false); });
-    }
+    };
+    tryPlay();
+    video.addEventListener('loadeddata', tryPlay);
+    // modo de economia de energia do iPhone e economia de dados bloqueiam o autoplay: tenta de novo no primeiro toque ou rolagem
+    var kick = function () { tryPlay(); };
+    ['touchstart', 'pointerdown', 'scroll', 'keydown'].forEach(function (ev) { window.addEventListener(ev, kick, { passive: true, once: true }); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) tryPlay(); });
     video.addEventListener('play', function () { setVideoBtn(true); });
     video.addEventListener('pause', function () { setVideoBtn(false); });
     vToggle.addEventListener('click', function () {
@@ -95,7 +104,7 @@
     if ('IntersectionObserver' in window) {
       new IntersectionObserver(function (en) {
         if (userPaused) return;
-        if (en[0].isIntersecting) { var pp = video.play(); if (pp && pp.catch) pp.catch(function () {}); } else video.pause();
+        if (en[0].isIntersecting) tryPlay(); else video.pause();
       }, { threshold: 0.05 }).observe(video);
     }
   }
@@ -144,7 +153,7 @@
     if (!G || reduce) return;
     var title = $('[data-hero-title]');
     var tl = G.timeline({ defaults: { ease: 'power4.out' } });
-    tl.fromTo('[data-hero-media]', { scale: 1.14, filter: 'brightness(.25)' }, { scale: 1, filter: 'brightness(1)', duration: 2.2, ease: 'power2.out' }, 0);
+    tl.fromTo('[data-hero-media]', { scale: 1.14, opacity: 0.2 }, { scale: 1, opacity: 1, duration: 2.2, ease: 'power2.out', clearProps: 'opacity' }, 0);
     if (window.SplitText) {
       var split = new window.SplitText(title, { type: 'lines,words', mask: 'lines', linesClass: 'ln' });
       tl.set(title, { opacity: 1 }, 0.2)
