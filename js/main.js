@@ -218,6 +218,41 @@
     });
   }
 
+  /* ------------------------------------------------------------ corte de faca (fotos do empório) */
+  // a lâmina risca a diagonal e a foto se abre a partir do corte, com o fio vermelho nas duas bordas
+  if (G && ST && !reduce) {
+    var CUT_SHUT = 'polygon(62% 0%, 62% 0%, 38% 100%, 38% 100%)';
+    var CUT_OPEN = 'polygon(0% 0%, 124% 0%, 100% 100%, -24% 100%)';
+    var mkSpan = function (cls) { var e = document.createElement('span'); e.className = cls; return e; };
+    $$('[data-cut]').forEach(function (fig) {
+      var img = $('img', fig);
+      var clip = mkSpan('ph__clip'), zoom = mkSpan('ph__zoom');
+      zoom.appendChild(img); clip.appendChild(zoom); fig.appendChild(clip);
+      var blades = [mkSpan('ph__blade'), mkSpan('ph__blade')];
+      blades.forEach(function (b) { b.setAttribute('aria-hidden', 'true'); b.appendChild(document.createElement('i')); fig.appendChild(b); });
+      fig.classList.add('is-cut');
+      G.set(clip, { clipPath: CUT_SHUT });
+      G.set(blades, { clipPath: 'inset(0% 0% 100% 0%)' });
+      // a foto recortada pode não disparar o lazy do navegador: carrega quando a seção se aproxima
+      ST.create({ trigger: fig, start: 'top 200%', once: true, onEnter: function () { img.loading = 'eager'; } });
+
+      var wait = parseFloat(fig.getAttribute('data-cut-delay') || '0');
+      G.timeline({
+        scrollTrigger: { trigger: fig, start: 'top 82%', once: true },
+        onComplete: function () {
+          G.set(clip, { clearProps: 'clipPath' });
+          blades.forEach(function (b) { fig.removeChild(b); });
+          fig.classList.remove('is-cut');
+        }
+      })
+        .to(blades, { clipPath: 'inset(0% 0% 0% 0%)', duration: 0.38, ease: 'power4.in' }, wait)
+        .to(clip, { clipPath: CUT_OPEN, duration: 1.05, ease: 'power4.inOut' }, '+=0.06')
+        .to(blades[0], { xPercent: -63, duration: 1.05, ease: 'power4.inOut' }, '<')
+        .to(blades[1], { xPercent: 63, duration: 1.05, ease: 'power4.inOut' }, '<')
+        .fromTo(zoom, { scale: 1.22 }, { scale: 1, duration: 1.5, ease: 'power3.out', clearProps: 'transform' }, '<0.1');
+    });
+  }
+
   /* ------------------------------------------------------------ capítulos da ciência (momento 2) */
   var chapSec = $('[data-chapters]');
   var chapTrack = $('[data-chapter-track]');

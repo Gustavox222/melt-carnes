@@ -213,6 +213,7 @@ em { font-style: normal; }
 .stats dd { font: 800 clamp(34px, 3.4vw, 48px)/1 var(--f-display); color: var(--bone); margin-bottom: 6px; }
 .emporio__photos { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; gap: 14px; }
 .emporio__photos .ph--tall { grid-column: 1 / -1; height: clamp(260px, 36vh, 380px); }
+.emporio__photos .ph--tall img { object-position: 50% 8%; }
 .emporio__photos .ph:not(.ph--tall) { height: clamp(170px, 23vh, 240px); }
 
 /* ------------------------------------------------------------ cortes (bento) */
@@ -452,6 +453,16 @@ em { font-style: normal; }
 
 /* ------------------------------------------------------------ revelação das fotos */
 .js:not(.reduce) [data-reveal] { clip-path: inset(0 0 0 0 round var(--radius)); }
+
+/* ------------------------------------------------------------ corte de faca (fotos do empório) */
+.ph.is-cut { background: transparent; }
+.ph__clip { background: var(--char-2); }
+.ph__clip, .ph__zoom, .ph__blade { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: block; }
+.ph__blade { pointer-events: none; }
+.ph__blade i {
+  position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: var(--red-hi);
+  clip-path: polygon(calc(62% - 1.5px) 0, calc(62% + 1.5px) 0, calc(38% + 1.5px) 100%, calc(38% - 1.5px) 100%);
+}
 
 /* ============================================================ responsivo */
 @media (max-width: 1180px) {
